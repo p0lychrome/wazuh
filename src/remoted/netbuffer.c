@@ -31,14 +31,14 @@ void nb_open(netbuffer_t * buffer, int sock, const struct sockaddr_in * peer_inf
 
 int nb_close(netbuffer_t * buffer, int sock) {
     int retval = close(sock);
-    w_mutex_lock(&mutex);
 
     if (!retval) {
+        w_mutex_lock(&mutex);
         free(buffer->buffers[sock].data);
         memset(buffer->buffers + sock, 0, sizeof(sockbuffer_t));
+        w_mutex_unlock(&mutex);
     }
 
-    w_mutex_unlock(&mutex);
     return retval;
 }
 
@@ -50,14 +50,14 @@ int nb_close(netbuffer_t * buffer, int sock) {
  * Returns the number of bytes received on success.
 */
 int nb_recv(netbuffer_t * buffer, int sock) {
+    w_mutex_lock(&mutex);
+
     sockbuffer_t * sockbuf = &buffer->buffers[sock];
     unsigned long data_ext = sockbuf->data_len + receive_chunk;
     long recv_len;
     unsigned long i;
     unsigned long cur_offset;
     uint32_t cur_len;
-
-    w_mutex_lock(&mutex);
 
     // Extend data buffer
 
